@@ -1,6 +1,8 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 const cardRouter = require('express').Router();
-const { getCards, deleteCard, createCard, putLike, deleteLike } = require('../controllers/cards');
+const {
+  getCards, deleteCard, createCard, putLike, deleteLike,
+} = require('../controllers/cards');
 
 cardRouter.get('/cards', getCards);
 
