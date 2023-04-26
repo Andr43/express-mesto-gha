@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/newline-after-import
 const Card = require('../models/card');
+const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
 
 module.exports.getCards = (req, res) => {
   Card.find({})
@@ -10,7 +11,13 @@ module.exports.getCards = (req, res) => {
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => { res.send({ data: card }); })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      if (err instanceof CastError) {
+        res.status(404).send({ message: 'Запрашиваемая карточка не найдена' });
+        return;
+      }
+      res.status(500).send({ message: 'Произошла ошибка' });
+    });
 };
 
 module.exports.createCard = (req, res) => {
@@ -21,7 +28,13 @@ module.exports.createCard = (req, res) => {
     .then((card) => {
       res.send({ data: card });
     })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      if (err instanceof ValidationError) {
+        res.status(400).send({ message: 'Переданные данные некорректны' });
+        return;
+      }
+      res.status(500).send({ message: 'Произошла ошибка' });
+    });
 };
 
 module.exports.putLike = (req, res) => {
@@ -31,7 +44,15 @@ module.exports.putLike = (req, res) => {
     { new: true },
   )
     .then((cards) => { res.send({ data: cards }); })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      if (err instanceof DocumentNotFoundError) {
+        return res.status(404).send({ message: 'Указанная карточка не найдена' });
+      }
+      if (err instanceof CastError) {
+        return res.status(400).send({ message: 'Переданные данные некорректны' });
+      }
+      res.status(500).send({ message: 'Произошла ошибка' });
+    });
 };
 
 module.exports.deleteLike = (req, res) =>{
@@ -41,5 +62,13 @@ module.exports.deleteLike = (req, res) =>{
     { new: true },
   )
     .then((cards) => { res.send({ data: cards }); })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((err) => {
+      if (err instanceof DocumentNotFoundError) {
+        return res.status(404).send({ message: 'Указанная карточка не найдена' });
+      }
+      if (err instanceof CastError) {
+        return res.status(400).send({ message: 'Переданные данные некорректны' });
+      }
+      res.status(500).send({ message: 'Произошла ошибка' });
+    });
 };
