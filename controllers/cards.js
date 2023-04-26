@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/newline-after-import
-const Card = require('../models/card');
 const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
+const Card = require('../models/card');
 
 module.exports.getCards = (req, res) => {
   Card.find({})
@@ -44,6 +44,7 @@ module.exports.putLike = (req, res) => {
     { new: true },
   )
     .then((cards) => { res.send({ data: cards }); })
+    // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
         return res.status(404).send({ message: 'Указанная карточка не найдена' });
@@ -55,13 +56,14 @@ module.exports.putLike = (req, res) => {
     });
 };
 
-module.exports.deleteLike = (req, res) =>{
+module.exports.deleteLike = (req, res) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
     .then((cards) => { res.send({ data: cards }); })
+  // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
         return res.status(404).send({ message: 'Указанная карточка не найдена' });

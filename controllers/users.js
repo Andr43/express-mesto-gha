@@ -1,13 +1,13 @@
 // eslint-disable-next-line import/newline-after-import
-const User = require('../models/user');
 const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
+const User = require('../models/user');
 
 module.exports.getUsers = (req, res) => {
   User.find({})
     .then((users) => {
       res.send({ data: users });
     })
-    .catch((err) => {
+    .catch(() => {
       res.status(500).send({ message: 'Произошла ошибка' });
     });
 };
@@ -55,6 +55,7 @@ module.exports.updateUser = (req, res) => {
     .then((user) => {
       res.send({ data: user });
     })
+    // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
         return res.status(404).send({ message: 'Указанный пользователь не найден' });
@@ -75,11 +76,12 @@ module.exports.updateUserAvatar = (req, res) => {
       new: true,
       runValidators: true,
       upsert: true,
-    }
+    },
   )
     .then((user) => {
       res.send({ data: user });
     })
+    // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
         return res.status(404).send({ message: 'Указанный пользователь не найден' });
