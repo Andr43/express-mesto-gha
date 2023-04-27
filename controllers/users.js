@@ -8,21 +8,26 @@ module.exports.getUsers = (req, res) => {
       res.send({ data: users });
     })
     .catch(() => {
-      res.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка.' });
     });
 };
 
 module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
+    .orFail()
     .then((user) => {
       res.send({ data: user });
     })
     .catch((err) => {
       if (err instanceof CastError) {
-        res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
+        res.status(400).send({ message: 'Запрашиваемый пользователь не найден.' });
         return;
       }
-      res.status(500).send({ message: 'Произошла ошибка' });
+      if (err instanceof DocumentNotFoundError) {
+        res.status(404).send({ message: 'Такого пользователя не существует. Похоже, вы ввели непраивльный ID.' });
+        return;
+      }
+      res.status(500).send({ message: 'Произошла ошибка.' });
     });
 };
 
@@ -34,10 +39,10 @@ module.exports.createUser = (req, res) => {
     })
     .catch((err) => {
       if (err instanceof ValidationError) {
-        res.status(400).send({ message: 'Переданные данные некорректны' });
+        res.status(400).send({ message: 'Переданные данные некорректны.' });
         return;
       }
-      res.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка.' });
     });
 };
 
@@ -58,12 +63,12 @@ module.exports.updateUser = (req, res) => {
     // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
-        return res.status(404).send({ message: 'Указанный пользователь не найден' });
+        return res.status(404).send({ message: 'Указанный пользователь не найден.' });
       }
       if (err instanceof ValidationError) {
-        return res.status(400).send({ message: 'Переданные данные некорректны' });
+        return res.status(400).send({ message: 'Переданные данные некорректны.' });
       }
-      res.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка.' });
     });
 };
 
@@ -84,11 +89,11 @@ module.exports.updateUserAvatar = (req, res) => {
     // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
-        return res.status(404).send({ message: 'Указанный пользователь не найден' });
+        return res.status(404).send({ message: 'Указанный пользователь не найден.' });
       }
       if (err instanceof ValidationError) {
-        return res.status(400).send({ message: 'Переданные данные некорректны' });
+        return res.status(400).send({ message: 'Переданные данные некорректны.' });
       }
-      res.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка.' });
     });
 };

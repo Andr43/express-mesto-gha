@@ -5,18 +5,23 @@ const Card = require('../models/card');
 module.exports.getCards = (req, res) => {
   Card.find({})
     .then((cards) => { res.send({ data: cards }); })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch(() => res.status(500).send({ message: 'Произошла ошибка.' }));
 };
 
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
+    .orFail()
     .then((card) => { res.send({ data: card }); })
     .catch((err) => {
-      if (err instanceof CastError) {
-        res.status(404).send({ message: 'Запрашиваемая карточка не найдена' });
+      if (err instanceof DocumentNotFoundError) {
+        res.status(404).send({ message: 'Такой карточки не существует. Похоже, вы ввели непраивльный ID.' });
         return;
       }
-      res.status(500).send({ message: 'Произошла ошибка' });
+      if (err instanceof CastError) {
+        res.status(400).send({ message: 'Запрашиваемая карточка не найдена.' });
+        return;
+      }
+      res.status(500).send({ message: 'Произошла ошибка.' });
     });
 };
 
@@ -30,10 +35,10 @@ module.exports.createCard = (req, res) => {
     })
     .catch((err) => {
       if (err instanceof ValidationError) {
-        res.status(400).send({ message: 'Переданные данные некорректны' });
+        res.status(400).send({ message: 'Переданные данные некорректны.' });
         return;
       }
-      res.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка.' });
     });
 };
 
@@ -43,16 +48,19 @@ module.exports.putLike = (req, res) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
+    .orFail()
     .then((cards) => { res.send({ data: cards }); })
     // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
-        return res.status(404).send({ message: 'Указанная карточка не найдена' });
+        res.status(404).send({ message: 'Указанная карточка не найдена.' });
+        return;
       }
       if (err instanceof CastError) {
-        return res.status(400).send({ message: 'Переданные данные некорректны' });
+        res.status(400).send({ message: 'Переданные данные некорректны.' });
+        return;
       }
-      res.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка.' });
     });
 };
 
@@ -62,15 +70,16 @@ module.exports.deleteLike = (req, res) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
+    .orFail()
     .then((cards) => { res.send({ data: cards }); })
   // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
-        return res.status(404).send({ message: 'Указанная карточка не найдена' });
+        return res.status(404).send({ message: 'Указанная карточка не найдена.' });
       }
       if (err instanceof CastError) {
-        return res.status(400).send({ message: 'Переданные данные некорректны' });
+        return res.status(400).send({ message: 'Переданные данные некорректны.' });
       }
-      res.status(500).send({ message: 'Произошла ошибка' });
+      res.status(500).send({ message: 'Произошла ошибка.' });
     });
 };
