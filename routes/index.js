@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const userRouter = require('./users');
-const cardRouter = require('./users');
+const cardRouter = require('./cards');
 const {
   HTTP_STATUS_NOT_FOUND,
 } = require('../utils/constants');
