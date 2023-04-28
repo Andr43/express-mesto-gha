@@ -1,11 +1,17 @@
-// eslint-disable-next-line import/newline-after-import
 const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
 const Card = require('../models/card');
+const {
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+  HTTP_STATUS_CREATED,
+} = require('../utils/constants');
 
 module.exports.getCards = (req, res) => {
   Card.find({})
+    .populate(['owner', 'likes'])
     .then((cards) => { res.send({ data: cards }); })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка.' }));
+    .catch(() => res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' }));
 };
 
 module.exports.deleteCard = (req, res) => {
@@ -14,14 +20,14 @@ module.exports.deleteCard = (req, res) => {
     .then((card) => { res.send({ data: card }); })
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
-        res.status(404).send({ message: 'Такой карточки не существует. Похоже, вы ввели непраивльный ID.' });
+        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Такой карточки не существует. Похоже, вы ввели непраивльный ID.' });
         return;
       }
       if (err instanceof CastError) {
-        res.status(400).send({ message: 'Запрашиваемая карточка не найдена.' });
+        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Запрашиваемая карточка не найдена.' });
         return;
       }
-      res.status(500).send({ message: 'Произошла ошибка.' });
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
     });
 };
 
@@ -31,14 +37,14 @@ module.exports.createCard = (req, res) => {
 
   Card.create({ name, link, owner: userId })
     .then((card) => {
-      res.send({ data: card });
+      res.status(HTTP_STATUS_CREATED).send({ data: card });
     })
     .catch((err) => {
       if (err instanceof ValidationError) {
-        res.status(400).send({ message: 'Переданные данные некорректны.' });
+        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданные данные некорректны.' });
         return;
       }
-      res.status(500).send({ message: 'Произошла ошибка.' });
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
     });
 };
 
@@ -49,18 +55,18 @@ module.exports.putLike = (req, res) => {
     { new: true },
   )
     .orFail()
+    .populate(['owner', 'likes'])
     .then((cards) => { res.send({ data: cards }); })
-    // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
-        res.status(404).send({ message: 'Указанная карточка не найдена.' });
+        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Указанная карточка не найдена.' });
         return;
       }
       if (err instanceof CastError) {
-        res.status(400).send({ message: 'Переданные данные некорректны.' });
+        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданные данные некорректны.' });
         return;
       }
-      res.status(500).send({ message: 'Произошла ошибка.' });
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
     });
 };
 
@@ -72,14 +78,13 @@ module.exports.deleteLike = (req, res) => {
   )
     .orFail()
     .then((cards) => { res.send({ data: cards }); })
-  // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
-        return res.status(404).send({ message: 'Указанная карточка не найдена.' });
+        return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Указанная карточка не найдена.' });
       }
       if (err instanceof CastError) {
-        return res.status(400).send({ message: 'Переданные данные некорректны.' });
+        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданные данные некорректны.' });
       }
-      res.status(500).send({ message: 'Произошла ошибка.' });
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
     });
 };
