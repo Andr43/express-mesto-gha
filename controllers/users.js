@@ -4,13 +4,12 @@ const { isEmail } = require('validator');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const {
-  HTTP_STATUS_NOT_FOUND,
-  HTTP_STATUS_BAD_REQUEST,
-  HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_CREATED,
-  HTTP_STATUS_UNAUTHORIZED,
 } = require('../utils/constants');
-const { NODE_ENV, JWT_SECRET } = process.env;
+const NotFoundError = require('../errors/not-found-error');
+const BadRequestError = require('../errors/bad-request-error');
+const InternalServerError = require('../errors/internal-server-error');
+const UnauthorizedError = require('../errors/unauthorized-error');
 
 module.exports.getUsers = (req, res) => {
   User.find({})

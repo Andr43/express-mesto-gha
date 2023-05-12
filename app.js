@@ -21,6 +21,9 @@ app.post('/signin', login);
 app.post('/signup', createUser);
 app.use(auth);
 app.use(router);
+app.use((err, req, res) => {
+  res.send({ message: err.message });
+});
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
