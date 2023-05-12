@@ -1,11 +1,16 @@
 const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
 const User = require('../models/user');
+const { isEmail } = require('validator');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const {
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_CREATED,
+  HTTP_STATUS_UNAUTHORIZED,
 } = require('../utils/constants');
+const { NODE_ENV, JWT_SECRET } = process.env;
 
 module.exports.getUsers = (req, res) => {
   User.find({})
@@ -37,8 +42,19 @@ module.exports.getUserById = (req, res) => {
 };
 
 module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
+  function checkEmail() {
+    if (isEmail(req.body.email) === true) {
+      return req.body.email;
+    }
+  }
+  bcrypt.hash(req.body.password, 10)
+    .then((hash) => User.create({
+      name: req.body.name,
+      about: req.body.about,
+      avatar: req.body.avatar,
+      email: checkEmail(),
+      password: hash,
+    }))
     .then((user) => {
       res.status(HTTP_STATUS_CREATED).send({ data: user });
     })
@@ -96,5 +112,44 @@ module.exports.updateUserAvatar = (req, res) => {
         return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданные данные некорректны.' });
       }
       return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
+    });
+};
+
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res
+        .cookie('jwt', token, {
+          maxAge: 3600000 * 24 * 7,
+          httpOnly: true,
+        })
+        .end();
+    })
+    .catch((err) => {
+      if (err instanceof ValidationError) {
+        return res.status(HTTP_STATUS_UNAUTHORIZED).send({ message: 'Вы указали неверный email или пароль.' });
+      }
+      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
+    });
+};
+
+module.exports.getUserInfo = (req, res) => {
+  User.find(req.params)
+    .orFail()
+    .then((user) => {
+      res.send({ data: user });
+    })
+    .catch((err) => {
+      if (err instanceof CastError) {
+        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Указанный Вами ID не прошел валидацию.' });
+        return;
+      }
+      if (err instanceof DocumentNotFoundError) {
+        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Такого пользователя не существует. Похоже, вы ввели непраивльный ID.' });
+        return;
+      }
+      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
     });
 };

@@ -5,6 +5,7 @@ const {
   HTTP_STATUS_BAD_REQUEST,
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
   HTTP_STATUS_CREATED,
+  HTTP_STATUS_UNAUTHORIZED,
 } = require('../utils/constants');
 
 module.exports.getCards = (req, res) => {
@@ -17,7 +18,13 @@ module.exports.getCards = (req, res) => {
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .orFail()
-    .then((card) => { res.send({ data: card }); })
+    .then((card) => {
+      if (req.user._id !== card.owner.toHexString()) {
+        res.status(HTTP_STATUS_UNAUTHORIZED).send({ message: 'Вы не имеете достаточных прав, чтобы удалить данную карточку' });
+        return;
+      }
+      res.send({ data: card });
+    })
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
         res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Такой карточки не существует. Похоже, вы ввели непраивльный ID.' });

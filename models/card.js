@@ -1,5 +1,5 @@
-// eslint-disable-next-line import/no-extraneous-dependencies, import/newline-after-import
 const mongoose = require('mongoose');
+
 const { Schema } = mongoose;
 
 const cardSchema = new Schema(
