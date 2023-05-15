@@ -1,8 +1,8 @@
 const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
-const User = require('../models/user');
 const { isEmail } = require('validator');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const User = require('../models/user');
 const {
   HTTP_STATUS_CREATED,
 } = require('../utils/constants');
@@ -10,41 +10,56 @@ const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
 const InternalServerError = require('../errors/internal-server-error');
 const UnauthorizedError = require('../errors/unauthorized-error');
+const StatusConflictError = require('../errors/status-conflict-error');
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => {
+      if (!users) {
+        throw new InternalServerError('На сервере произошла ошибка.');
+      }
       res.send({ data: users });
     })
-    .catch(() => {
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
-    });
+    .catch(next);
 };
 
-module.exports.getUserById = (req, res) => {
+module.exports.getUserInfo = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        throw new InternalServerError('На сервере произошла ошибка.');
+      }
+      res.send({ data: user });
+    })
+    .catch(next);
+};
+
+module.exports.getUserById = (req, res, next) => {
   User.findById(req.params.userId)
     .orFail()
     .then((user) => {
+      if (!user) {
+        throw new InternalServerError('На сервере произошла ошибка.');
+      }
       res.send({ data: user });
     })
     .catch((err) => {
       if (err instanceof CastError) {
-        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Указанный Вами ID не прошел валидацию.' });
-        return;
+        next(new BadRequestError('Указанный Вами ID не прошел валидацию.'));
       }
       if (err instanceof DocumentNotFoundError) {
-        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Такого пользователя не существует. Похоже, вы ввели непраивльный ID.' });
-        return;
+        next(new NotFoundError('Такого пользователя не существует. Похоже, вы ввели непраивльный ID.'));
       }
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
+      next(err);
     });
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   function checkEmail() {
-    if (isEmail(req.body.email) === true) {
-      return req.body.email;
+    if (isEmail(req.body.email) === false) {
+      throw new BadRequestError('Указанный вами email не прошел валидацию.');
     }
+    return req.body.email;
   }
   bcrypt.hash(req.body.password, 10)
     .then((hash) => User.create({
@@ -55,18 +70,23 @@ module.exports.createUser = (req, res) => {
       password: hash,
     }))
     .then((user) => {
+      if (!user) {
+        throw new InternalServerError('На сервере произошла ошибка.');
+      }
       res.status(HTTP_STATUS_CREATED).send({ data: user });
     })
     .catch((err) => {
-      if (err instanceof ValidationError) {
-        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданные данные некорректны.' });
-        return;
+      if (err.code === 11000) {
+        next(new StatusConflictError('Вы уже зарегистрированы.'));
       }
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
+      if (err instanceof ValidationError) {
+        next(new BadRequestError('Переданные данные некорректны.'));
+      }
+      next(err);
     });
 };
 
-module.exports.updateUser = (req, res) => {
+module.exports.updateUser = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -77,20 +97,23 @@ module.exports.updateUser = (req, res) => {
     },
   )
     .then((user) => {
+      if (!user) {
+        throw new InternalServerError('На сервере произошла ошибка.');
+      }
       res.send({ data: user });
     })
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
-        return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Указанный пользователь не найден.' });
+        next(new NotFoundError('Указанный пользователь не найден.'));
       }
       if (err instanceof ValidationError) {
-        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданные данные некорректны.' });
+        next(new BadRequestError('Переданные данные некорректны.'));
       }
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
+      next(err);
     });
 };
 
-module.exports.updateUserAvatar = (req, res) => {
+module.exports.updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
@@ -101,23 +124,29 @@ module.exports.updateUserAvatar = (req, res) => {
     },
   )
     .then((user) => {
+      if (!user) {
+        throw new InternalServerError('На сервере произошла ошибка.');
+      }
       res.send({ data: user });
     })
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
-        return res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Указанный пользователь не найден.' });
+        next(new NotFoundError('Указанный пользователь не найден.'));
       }
       if (err instanceof ValidationError) {
-        return res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Переданные данные некорректны.' });
+        next(new BadRequestError('Вы указали ссылку в неверном формате.'));
       }
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
+      next(err);
     });
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
+      if (!user) {
+        throw new InternalServerError('На сервере произошла ошибка.');
+      }
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
       res
         .cookie('jwt', token, {
@@ -128,27 +157,8 @@ module.exports.login = (req, res) => {
     })
     .catch((err) => {
       if (err instanceof ValidationError) {
-        return res.status(HTTP_STATUS_UNAUTHORIZED).send({ message: 'Вы указали неверный email или пароль.' });
+        next(new UnauthorizedError('Вы указали неверный email или пароль.'));
       }
-      return res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
-    });
-};
-
-module.exports.getUserInfo = (req, res) => {
-  User.find(req.params)
-    .orFail()
-    .then((user) => {
-      res.send({ data: user });
-    })
-    .catch((err) => {
-      if (err instanceof CastError) {
-        res.status(HTTP_STATUS_BAD_REQUEST).send({ message: 'Указанный Вами ID не прошел валидацию.' });
-        return;
-      }
-      if (err instanceof DocumentNotFoundError) {
-        res.status(HTTP_STATUS_NOT_FOUND).send({ message: 'Такого пользователя не существует. Похоже, вы ввели непраивльный ID.' });
-        return;
-      }
-      res.status(HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Произошла ошибка.' });
+      next(err);
     });
 };
