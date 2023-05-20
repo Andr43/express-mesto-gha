@@ -13,6 +13,12 @@ const cardSchema = new Schema(
     link: {
       type: String,
       required: true,
+      validate: {
+        validator(v) {
+          return /https?:\/\/(w{1,3}\.)?[\w+\-._~:/?#[\]@!$&'()*+,;=]+/.test(v);
+        },
+        message: (props) => `${props.value} не является ссылкой!`,
+      },
     },
     owner: {
       type: Schema.Types.ObjectId,

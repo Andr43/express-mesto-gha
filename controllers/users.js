@@ -1,5 +1,4 @@
 const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
-const { isEmail } = require('validator');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
@@ -55,18 +54,12 @@ module.exports.getUserById = (req, res, next) => {
 };
 
 module.exports.createUser = (req, res, next) => {
-  function checkEmail() {
-    if (isEmail(req.body.email) === false) {
-      throw new BadRequestError('Указанный вами email не прошел валидацию.');
-    }
-    return req.body.email;
-  }
   bcrypt.hash(req.body.password, 10)
     .then((hash) => User.create({
       name: req.body.name,
       about: req.body.about,
       avatar: req.body.avatar,
-      email: checkEmail(),
+      email: req.body.email,
       password: hash,
     }))
     .then((user) => {
@@ -153,6 +146,7 @@ module.exports.login = (req, res, next) => {
           maxAge: 3600000 * 24 * 7,
           httpOnly: true,
         })
+        .status(HTTP_STATUS_CREATED).send({ data: user })
         .end();
     })
     .catch((err) => {

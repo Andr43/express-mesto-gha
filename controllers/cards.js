@@ -6,11 +6,10 @@ const {
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
 const InternalServerError = require('../errors/internal-server-error');
-const UnauthorizedError = require('../errors/unauthorized-error');
+const StatusForbiddenError = require('../errors/status-forbidden-error');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
-    .populate(['owner', 'likes'])
     .then((cards) => {
       if (!cards) {
         throw new InternalServerError('На сервере произошла ошибка.');
@@ -18,29 +17,6 @@ module.exports.getCards = (req, res, next) => {
       res.send({ data: cards });
     })
     .catch(next);
-};
-
-module.exports.deleteCard = (req, res, next) => {
-  Card.findByIdAndRemove(req.params.cardId)
-    .orFail()
-    .then((card) => {
-      if (!card) {
-        throw new InternalServerError('На сервере произошла ошибка.');
-      }
-      if (req.user._id !== card.owner.toHexString()) {
-        throw new UnauthorizedError('Вы не имеете достаточных прав, чтобы удалить данную карточку.');
-      }
-      res.send({ data: card });
-    })
-    .catch((err) => {
-      if (err instanceof DocumentNotFoundError) {
-        next(new NotFoundError('Такой карточки не существует.'));
-      }
-      if (err instanceof CastError) {
-        next(new BadRequestError('Запрашиваемая карточка не найдена.'));
-      }
-      next(err);
-    });
 };
 
 module.exports.createCard = (req, res, next) => {
@@ -57,6 +33,29 @@ module.exports.createCard = (req, res, next) => {
     .catch((err) => {
       if (err instanceof ValidationError) {
         next(new BadRequestError('Переданные данные некорректны.'));
+      }
+      next(err);
+    });
+};
+
+module.exports.deleteCard = (req, res, next) => {
+  Card.findByIdAndRemove(req.params.cardId)
+    .orFail()
+    .then((card) => {
+      if (!card) {
+        throw new InternalServerError('На сервере произошла ошибка.');
+      }
+      if (req.user._id !== card.owner.toHexString()) {
+        throw new StatusForbiddenError('Вы не имеете достаточных прав, чтобы удалить данную карточку.');
+      }
+      res.send({ data: card });
+    })
+    .catch((err) => {
+      if (err instanceof DocumentNotFoundError) {
+        next(new NotFoundError('Такой карточки не существует.'));
+      }
+      if (err instanceof CastError) {
+        next(new BadRequestError('Запрашиваемая карточка не найдена.'));
       }
       next(err);
     });

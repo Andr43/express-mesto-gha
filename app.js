@@ -13,6 +13,7 @@ const auth = require('./middlewares/auth');
 const {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
 } = require('./utils/constants');
+const { celebrate, Joi, errors } = require('celebrate');
 
 mongoose.connect('mongodb://127.0.0.1/mestodb', {
   useNewUrlParser: true,
@@ -20,10 +21,24 @@ mongoose.connect('mongodb://127.0.0.1/mestodb', {
 
 app.use(express.json());
 app.use(cookieParser());
-app.post('/signin', login);
-app.post('/signup', createUser);
+app.post('/signup', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+    avatar: Joi.string(),
+  }),
+}), createUser);
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+  }),
+}), login);
 app.use(auth);
 app.use(router);
+app.use(errors());
 app.use((err, req, res, next) => {
   const { statusCode = HTTP_STATUS_INTERNAL_SERVER_ERROR, message } = err;
   res
