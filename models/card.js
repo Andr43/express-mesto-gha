@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
-const regex = require('../utils/constants');
+const { regex } = require('../utils/constants');
 
 const cardSchema = new Schema(
   {
