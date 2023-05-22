@@ -2,9 +2,6 @@ const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose'
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
-const {
-  HTTP_STATUS_CREATED,
-} = require('../utils/constants');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
 const InternalServerError = require('../errors/internal-server-error');
@@ -146,7 +143,7 @@ module.exports.login = (req, res, next) => {
           maxAge: 3600000 * 24 * 7,
           httpOnly: true,
         })
-        .status(HTTP_STATUS_CREATED).send({ data: user })
+        .send({ data: user })
         .end();
     })
     .catch((err) => {
