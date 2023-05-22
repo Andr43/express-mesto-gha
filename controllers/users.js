@@ -66,7 +66,7 @@ module.exports.createUser = (req, res, next) => {
       if (!user) {
         throw new InternalServerError('На сервере произошла ошибка.');
       }
-      res.status(HTTP_STATUS_CREATED).send({ data: user });
+      res.send({ data: user });
     })
     .catch((err) => {
       if (err.code === 11000) {

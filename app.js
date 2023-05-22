@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const { PORT = 3000 } = process.env;
 const app = express();
 const cookieParser = require('cookie-parser');
+const { celebrate, Joi, errors } = require('celebrate');
 const router = require('./routes/index');
 const {
   createUser, login,
@@ -13,7 +14,6 @@ const auth = require('./middlewares/auth');
 const {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
 } = require('./utils/constants');
-const { celebrate, Joi, errors } = require('celebrate');
 
 mongoose.connect('mongodb://127.0.0.1/mestodb', {
   useNewUrlParser: true,
@@ -27,7 +27,7 @@ app.post('/signup', celebrate({
     password: Joi.string().required(),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string(),
+    avatar: Joi.string().regex(/https?:\/\/(w{1,3}\.)?[\w+\-._~:/?#[\]@!$&'()*+,;=]+/),
   }),
 }), createUser);
 app.post('/signin', celebrate({
