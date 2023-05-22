@@ -3,6 +3,7 @@ const { celebrate, Joi } = require('celebrate');
 const {
   getCards, deleteCard, createCard, putLike, deleteLike,
 } = require('../controllers/cards');
+const regex = require('../utils/constants');
 
 cardRouter.get('/', getCards);
 
@@ -15,7 +16,7 @@ cardRouter.delete('/:cardId', celebrate({
 cardRouter.post('/', celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
-    link: Joi.string().required().regex(/https?:\/\/(w{1,3}\.)?[\w+\-._~:/?#[\]@!$&'()*+,;=]+/),
+    link: Joi.string().required().regex(regex),
   }),
 }), createCard);
 

@@ -10,6 +10,8 @@ const {
   HTTP_STATUS_FORBIDDEN,
 } = http2.constants;
 
+const regex = /https?:\/\/(w{1,3}\.)?[\w+\-._~:/?#[\]@!$&'()*+,;=]+/;
+
 module.exports = {
   HTTP_STATUS_NOT_FOUND,
   HTTP_STATUS_BAD_REQUEST,
@@ -18,4 +20,5 @@ module.exports = {
   HTTP_STATUS_UNAUTHORIZED,
   HTTP_STATUS_CONFLICT,
   HTTP_STATUS_FORBIDDEN,
+  regex,
 };

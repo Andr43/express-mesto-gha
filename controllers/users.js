@@ -4,7 +4,6 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
-const InternalServerError = require('../errors/internal-server-error');
 const UnauthorizedError = require('../errors/unauthorized-error');
 const StatusConflictError = require('../errors/status-conflict-error');
 
@@ -12,7 +11,7 @@ module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => {
       if (!users) {
-        throw new InternalServerError('На сервере произошла ошибка.');
+        next();
       }
       res.send({ data: users });
     })
@@ -23,7 +22,7 @@ module.exports.getUserInfo = (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        throw new InternalServerError('На сервере произошла ошибка.');
+        next();
       }
       res.send({ data: user });
     })
@@ -34,19 +33,14 @@ module.exports.getUserById = (req, res, next) => {
   User.findById(req.params.userId)
     .orFail()
     .then((user) => {
-      if (!user) {
-        throw new InternalServerError('На сервере произошла ошибка.');
-      }
       res.send({ data: user });
     })
     .catch((err) => {
       if (err instanceof CastError) {
         next(new BadRequestError('Указанный Вами ID не прошел валидацию.'));
-      }
-      if (err instanceof DocumentNotFoundError) {
+      } else if (err instanceof DocumentNotFoundError) {
         next(new NotFoundError('Такого пользователя не существует. Похоже, вы ввели непраивльный ID.'));
-      }
-      next(err);
+      } else next(err);
     });
 };
 
@@ -60,19 +54,14 @@ module.exports.createUser = (req, res, next) => {
       password: hash,
     }))
     .then((user) => {
-      if (!user) {
-        throw new InternalServerError('На сервере произошла ошибка.');
-      }
       res.send({ data: user });
     })
     .catch((err) => {
       if (err.code === 11000) {
         next(new StatusConflictError('Вы уже зарегистрированы.'));
-      }
-      if (err instanceof ValidationError) {
+      } else if (err instanceof ValidationError) {
         next(new BadRequestError('Переданные данные некорректны.'));
-      }
-      next(err);
+      } else next(err);
     });
 };
 
@@ -86,20 +75,16 @@ module.exports.updateUser = (req, res, next) => {
       runValidators: true,
     },
   )
+    .orFail()
     .then((user) => {
-      if (!user) {
-        throw new InternalServerError('На сервере произошла ошибка.');
-      }
       res.send({ data: user });
     })
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
         next(new NotFoundError('Указанный пользователь не найден.'));
-      }
-      if (err instanceof ValidationError) {
+      } else if (err instanceof ValidationError) {
         next(new BadRequestError('Переданные данные некорректны.'));
-      }
-      next(err);
+      } else next(err);
     });
 };
 
@@ -113,20 +98,16 @@ module.exports.updateUserAvatar = (req, res, next) => {
       runValidators: true,
     },
   )
+    .orFail()
     .then((user) => {
-      if (!user) {
-        throw new InternalServerError('На сервере произошла ошибка.');
-      }
       res.send({ data: user });
     })
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
         next(new NotFoundError('Указанный пользователь не найден.'));
-      }
-      if (err instanceof ValidationError) {
+      } else if (err instanceof ValidationError) {
         next(new BadRequestError('Вы указали ссылку в неверном формате.'));
-      }
-      next(err);
+      } else next(err);
     });
 };
 
@@ -134,9 +115,6 @@ module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      if (!user) {
-        throw new InternalServerError('На сервере произошла ошибка.');
-      }
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
       res
         .cookie('jwt', token, {
@@ -149,7 +127,6 @@ module.exports.login = (req, res, next) => {
     .catch((err) => {
       if (err instanceof ValidationError) {
         next(new UnauthorizedError('Вы указали неверный email или пароль.'));
-      }
-      next(err);
+      } else next(err);
     });
 };

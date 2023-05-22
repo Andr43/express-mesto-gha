@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
+const regex = require('../utils/constants');
 
 const cardSchema = new Schema(
   {
@@ -15,7 +16,7 @@ const cardSchema = new Schema(
       required: true,
       validate: {
         validator(v) {
-          return /https?:\/\/(w{1,3}\.)?[\w+\-._~:/?#[\]@!$&'()*+,;=]+/.test(v);
+          return regex.test(v);
         },
         message: (props) => `${props.value} не является ссылкой!`,
       },
@@ -23,6 +24,7 @@ const cardSchema = new Schema(
     owner: {
       type: Schema.Types.ObjectId,
       ref: 'user',
+      required: true,
     },
     likes: [{
       type: Schema.Types.ObjectId,
