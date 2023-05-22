@@ -59,9 +59,11 @@ module.exports.createUser = (req, res, next) => {
     .catch((err) => {
       if (err.code === 11000) {
         next(new StatusConflictError('Вы уже зарегистрированы.'));
-      } else if (err instanceof ValidationError) {
+      }
+      if (err instanceof ValidationError) {
         next(new BadRequestError('Переданные данные некорректны.'));
-      } else next(err);
+      }
+      next(err);
     });
 };
 
