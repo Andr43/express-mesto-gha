@@ -14,12 +14,11 @@ const auth = require('./middlewares/auth');
 const {
   HTTP_STATUS_INTERNAL_SERVER_ERROR,
 } = require('./utils/constants');
-const regex = require('./utils/constants');
+const { regex } = require('./utils/constants');
 
 mongoose.connect('mongodb://127.0.0.1/mestodb', {
   useNewUrlParser: true,
 });
-
 app.use(express.json());
 app.use(cookieParser());
 app.post('/signup', celebrate({

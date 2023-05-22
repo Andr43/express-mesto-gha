@@ -3,7 +3,7 @@ const { celebrate, Joi } = require('celebrate');
 const {
   getCards, deleteCard, createCard, putLike, deleteLike,
 } = require('../controllers/cards');
-const regex = require('../utils/constants');
+const { regex } = require('../utils/constants');
 
 cardRouter.get('/', getCards);
 

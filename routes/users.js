@@ -3,7 +3,8 @@ const { celebrate, Joi } = require('celebrate');
 const {
   getUsers, getUserById, updateUser, updateUserAvatar, getUserInfo,
 } = require('../controllers/users');
-regex
+
+const { regex } = require('../utils/constants');
 
 userRouter.get('/', getUsers);
 
