@@ -4,15 +4,11 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const NotFoundError = require('../errors/not-found-error');
 const BadRequestError = require('../errors/bad-request-error');
-const UnauthorizedError = require('../errors/unauthorized-error');
 const StatusConflictError = require('../errors/status-conflict-error');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => {
-      if (!users) {
-        next();
-      }
       res.send({ data: users });
     })
     .catch(next);
@@ -22,7 +18,7 @@ module.exports.getUserInfo = (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        next();
+        throw new NotFoundError('Такого пользователя не существует.');
       }
       res.send({ data: user });
     })
@@ -59,11 +55,9 @@ module.exports.createUser = (req, res, next) => {
     .catch((err) => {
       if (err.code === 11000) {
         next(new StatusConflictError('Вы уже зарегистрированы.'));
-      }
-      if (err instanceof ValidationError) {
+      } else if (err instanceof ValidationError) {
         next(new BadRequestError('Переданные данные некорректны.'));
-      }
-      next(err);
+      } else next(err);
     });
 };
 
@@ -128,7 +122,7 @@ module.exports.login = (req, res, next) => {
     })
     .catch((err) => {
       if (err instanceof ValidationError) {
-        next(new UnauthorizedError('Вы указали неверный email или пароль.'));
+        next(new BadRequestError('Вы указали неверный email или пароль.'));
       } else next(err);
     });
 };

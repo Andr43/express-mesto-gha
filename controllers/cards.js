@@ -10,9 +10,6 @@ const StatusForbiddenError = require('../errors/status-forbidden-error');
 module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => {
-      if (!cards) {
-        next();
-      }
       res.send({ data: cards });
     })
     .catch(next);
@@ -34,13 +31,17 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  Card.findById(req.params.cardId)
     .orFail()
     .then((card) => {
       if (req.user._id !== card.owner.toHexString()) {
         throw new StatusForbiddenError('Вы не имеете достаточных прав, чтобы удалить данную карточку.');
+      } else {
+        Card.findByIdAndRemove(req.params.cardId)
+          .then(() => {
+            res.send({ message: 'Ваша карточка удалена.' });
+          });
       }
-      res.send({ data: card });
     })
     .catch((err) => {
       if (err instanceof DocumentNotFoundError) {
