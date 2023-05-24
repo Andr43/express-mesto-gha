@@ -21,10 +21,12 @@
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "express-winston": "^4.2.0",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.5",
     "mongoose-unique-validator": "^4.0.0",
-    "validator": "^13.9.0"
+    "validator": "^13.9.0",
+    "winston": "^3.8.2"
   },
   "description": "[![Tests](../../actions/workflows/tests-13-sprint.yml/badge.svg)](../../actions/workflows/tests-13-sprint.yml) [![Tests](../../actions/workflows/tests-14-sprint.yml/badge.svg)](../../actions/workflows/tests-14-sprint.yml)\r # Проект Mesto фронтенд + бэкенд",
   "repository": {

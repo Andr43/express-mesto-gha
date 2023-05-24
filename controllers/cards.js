@@ -37,7 +37,7 @@ module.exports.deleteCard = (req, res, next) => {
       if (req.user._id !== card.owner.toHexString()) {
         throw new StatusForbiddenError('Вы не имеете достаточных прав, чтобы удалить данную карточку.');
       } else {
-        Card.findByIdAndRemove(req.params.cardId)
+        return Card.findByIdAndRemove(req.params.cardId)
           .then(() => {
             res.send({ message: 'Ваша карточка удалена.' });
           });
