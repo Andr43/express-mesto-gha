@@ -13,6 +13,7 @@ const {
 } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
+const corsHandler = require('./middlewares/corsHandler');
 const {
   registrationValidator,
   loginValidator,
@@ -23,6 +24,7 @@ mongoose.connect('mongodb://127.0.0.1/mestodb', {
 });
 app.use(express.json());
 app.use(cookieParser());
+app.use(corsHandler);
 app.use(requestLogger);
 app.post('/signup', registrationValidator, createUser);
 app.post('/signin', loginValidator, login);
